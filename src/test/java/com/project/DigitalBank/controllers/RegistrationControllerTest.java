@@ -1,5 +1,6 @@
 package com.project.DigitalBank.controllers;
 
+import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.services.RegistrationService;
@@ -18,8 +19,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 class RegistrationControllerTest {
@@ -40,7 +40,24 @@ class RegistrationControllerTest {
             .cpf(CPF)
             .build();
 
-    private static final Registration REGISTRATION = new Registration(ID, REGISTRATION_DTO);
+    // private static final Registration REGISTRATION = new Registration(ID, REGISTRATION_DTO);
+
+    private static final String CEP = "00000-000";
+    private static final String RUA = "rua";
+    private static final String BAIRRO = "bairro";
+    private static final String COMPLEMENTO = "complemento";
+    private static final String CIDADE = "cidade";
+    private static final String ESTADO = "estado";
+
+    private static final RegistrationAddressDto REGISTRATION_ADDRESS_DTO = RegistrationAddressDto
+            .builder()
+            .cep(CEP)
+            .rua(RUA)
+            .bairro(BAIRRO)
+            .complemento(COMPLEMENTO)
+            .cidade(CIDADE)
+            .estado(ESTADO)
+            .build();
 
     @Mock
     private RegistrationService registrationService;
@@ -67,9 +84,26 @@ class RegistrationControllerTest {
         void shouldReturnOkWhenArgumentsAreValid() {
             when(registrationService.validateAndSaveIdentificationInformation(REGISTRATION_DTO)).thenReturn(ID);
 
-            ResponseEntity<String> id = registrationController.beginRegistration(REGISTRATION_DTO);
+            ResponseEntity<String> responseEntity = registrationController.beginRegistration(REGISTRATION_DTO);
+
+            assertEquals(ID, responseEntity.getBody());
 
             verify(registrationService).validateAndSaveIdentificationInformation(REGISTRATION_DTO);
+        }
+    }
+
+    @Nested
+    class addressRegistration {
+
+        @Test
+        void shouldReturnOkWhenArgumentsAreValid() {
+            doNothing().when(registrationService).validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO);
+
+            ResponseEntity<String> responseEntity = registrationController.addressRegistration(ID, REGISTRATION_ADDRESS_DTO);
+
+            assertEquals(ID, responseEntity.getBody());
+
+            verify(registrationService).validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO);
         }
     }
 }

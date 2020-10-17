@@ -7,8 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -42,6 +41,9 @@ public class Registration {
     @NotNull
     @Pattern(regexp = "^[0-9]{11}$")
     private String cpf;
+
+    @OneToOne(mappedBy = "registration",cascade = CascadeType.ALL)
+    private RegistrationAddress registrationAddress;
 
     public Registration(String id, RegistrationDto registrationDto) {
         this.id = id;

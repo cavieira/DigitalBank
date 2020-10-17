@@ -1,7 +1,9 @@
 package com.project.DigitalBank.services;
 
+import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
 import com.project.DigitalBank.models.Registration;
+import com.project.DigitalBank.models.RegistrationAddress;
 import com.project.DigitalBank.repositories.RegistrationRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.validation.ValidationException;
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -36,6 +39,24 @@ class RegistrationServiceTest {
             .build();
 
     private static final Registration REGISTRATION = new Registration(ID, REGISTRATION_DTO);
+
+    private static final String CEP = "00000-000";
+    private static final String RUA = "rua";
+    private static final String BAIRRO = "bairro";
+    private static final String COMPLEMENTO = "complemento";
+    private static final String CIDADE = "cidade";
+    private static final String ESTADO = "estado";
+
+    private static final RegistrationAddressDto REGISTRATION_ADDRESS_DTO = RegistrationAddressDto
+            .builder()
+            .cep(CEP)
+            .rua(RUA)
+            .bairro(BAIRRO)
+            .complemento(COMPLEMENTO)
+            .cidade(CIDADE)
+            .estado(ESTADO)
+            .build();
+
 
     @Mock
     private RegistrationRepository registrationRepository;
@@ -86,6 +107,41 @@ class RegistrationServiceTest {
             verify(registrationRepository).save(REGISTRATION);
             verify(registrationRepository).findOneByCpf(CPF);
             verify(registrationRepository).findOneByEmail(EMAIL);
+        }
+    }
+
+    @Nested
+    class ValidateAndSaveAddressInformation {
+
+        @Test
+        void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
+
+            assertThrows(ValidationException.class,
+                    () -> registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldSaveWhenArgumentsAreValid() {
+            RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
+
+            Registration registrationWithAddress = REGISTRATION
+                    .toBuilder()
+                    .registrationAddress(registrationAddress)
+                    .build();
+
+            registrationAddress.setRegistration(registrationWithAddress);
+
+
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(REGISTRATION));
+            when(registrationRepository.save(registrationWithAddress)).thenReturn(registrationWithAddress);
+
+            registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO);
+
+            verify(registrationRepository).findById(ID);
+            verify(registrationRepository).save(registrationWithAddress);
         }
     }
 }
