@@ -4,7 +4,6 @@ import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
 import com.project.DigitalBank.dtos.RegistrationInformationDto;
-import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.services.RegistrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -151,10 +150,11 @@ class RegistrationControllerTest {
         void shouldReturnRegistrationInformation() {
             when(registrationService.getRegistrationInfo(ID)).thenReturn(REGISTRATION_INFORMATION_DTO);
 
-            RegistrationInformationDto registrationInformationDto = registrationController.proposalInformation(ID);
+            ResponseEntity<RegistrationInformationDto> responseEntity = registrationController.proposalInformation(ID);
+
+            assertEquals(REGISTRATION_INFORMATION_DTO, responseEntity.getBody());
 
             verify(registrationService).getRegistrationInfo(ID);
-            assertEquals(REGISTRATION_INFORMATION_DTO, registrationInformationDto);
         }
     }
 }

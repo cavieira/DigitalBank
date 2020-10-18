@@ -2,7 +2,6 @@ package com.project.DigitalBank.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
-import com.project.DigitalBank.dtos.RegistrationDto;
 import lombok.*;
 
 import javax.persistence.Entity;

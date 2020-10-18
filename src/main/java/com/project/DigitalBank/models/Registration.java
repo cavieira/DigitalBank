@@ -42,10 +42,10 @@ public class Registration {
     @Pattern(regexp = "^[0-9]{11}$")
     private String cpf;
 
-    @OneToOne(mappedBy = "registration",cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "registration", cascade = CascadeType.ALL)
     private RegistrationAddress registrationAddress;
 
-    @OneToOne(mappedBy = "registration",cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "registration", cascade = CascadeType.ALL)
     private RegistrationDocument registrationDocument;
 
     public Registration(String id, RegistrationDto registrationDto) {

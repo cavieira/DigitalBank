@@ -2,13 +2,9 @@ package com.project.DigitalBank.services;
 
 import com.project.DigitalBank.exceptions.RegistrationDocumentSaveFailed;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.Validation;
 import javax.validation.ValidationException;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Base64;

@@ -1,6 +1,6 @@
 package com.project.DigitalBank.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
@@ -11,10 +11,9 @@ import com.project.DigitalBank.exceptions.RegistrationNotFound;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.models.RegistrationAddress;
 import com.project.DigitalBank.models.RegistrationDocument;
-import com.project.DigitalBank.repositories.RegistrationAddressRepository;
 import com.project.DigitalBank.repositories.RegistrationRepository;
+import com.project.DigitalBank.senders.RegistrationAcceptSender;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.validation.ValidationException;
@@ -23,15 +22,13 @@ import javax.validation.ValidationException;
 @RequiredArgsConstructor
 public class RegistrationService {
 
-    private final RegistrationRepository repository;
-    private final RegistrationAddressRepository registrationAddressRepository;
-
     private final UUIDService uuidService;
+
+    private final RegistrationRepository repository;
 
     private final RegistrationDocumentService registrationDocumentService;
 
-    @Autowired
-    private ObjectMapper mapper;
+    private final RegistrationAcceptSender registrationAcceptSender;
 
     public String validateAndSaveIdentificationInformation(RegistrationDto registrationDto) {
 
@@ -128,5 +125,19 @@ public class RegistrationService {
                 .cidade(address.getCidade())
                 .estado(address.getEstado())
                 .build();
+    }
+
+    public void acceptRegistration(String id)
+            throws JsonProcessingException {
+        registrationAcceptSender.sendMessage(getRegistrationInfo(id));
+    }
+
+    public void rejectedRegistration(String id) {
+        // Mandar email insistindo
+    }
+
+    public void createAccount(RegistrationInformationDto registrationInformationDto) {
+        // Criar conta
+        // Mandar email de confirmação
     }
 }

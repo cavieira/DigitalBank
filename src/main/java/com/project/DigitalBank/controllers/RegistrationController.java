@@ -1,10 +1,7 @@
 package com.project.DigitalBank.controllers;
 
-import com.project.DigitalBank.dtos.RegistrationAddressDto;
-import com.project.DigitalBank.dtos.RegistrationDocumentDto;
-import com.project.DigitalBank.dtos.RegistrationDto;
-import com.project.DigitalBank.dtos.RegistrationInformationDto;
-import com.project.DigitalBank.models.Registration;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.project.DigitalBank.dtos.*;
 import com.project.DigitalBank.services.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +19,11 @@ public class RegistrationController {
     private final RegistrationService registrationService;
 
     @PostMapping("/registration/")
-    public ResponseEntity<String> beginRegistration(@RequestBody @Valid @NotNull RegistrationDto registrationDto) {
+    public ResponseEntity<String> beginRegistration(
+            @RequestBody @Valid @NotNull RegistrationDto registrationDto) {
         String id = registrationService.validateAndSaveIdentificationInformation(registrationDto);
 
-        return createURI("/registration/{id}/address/", id);
+        return createURI("/registration/{id}/address/", id, id);
     }
 
     @PostMapping("/registration/{id}/address/")
@@ -34,7 +32,7 @@ public class RegistrationController {
             @RequestBody @Valid @NotNull RegistrationAddressDto registrationAddressDto) {
         registrationService.validateAndSaveAddressInformation(id, registrationAddressDto);
 
-        return createURI("/registration/{id}/document/", id);
+        return createURI("/registration/{id}/document/", id, id);
     }
 
     @PostMapping("/registration/{id}/document/")
@@ -44,23 +42,38 @@ public class RegistrationController {
 
         registrationService.validateAndSaveCPFFile(id, registrationDocumentDto);
 
-        return createURI("/registration/{id}/proposalinfo/", id);
+        return createURI("/registration/{id}/proposalinfo/", id, id);
     }
 
-    @GetMapping("/registration/{id}/proposalinfo/")
-    public RegistrationInformationDto proposalInformation(
+    @GetMapping("registration//{id}/proposalinfo/")
+    public ResponseEntity<RegistrationInformationDto> proposalInformation(
             @PathVariable String id) {
-
-        return registrationService.getRegistrationInfo(id);
+        RegistrationInformationDto information = registrationService.getRegistrationInfo(id);
+        return createURI("/registration/{id}/proposalaccept/", id, information);
     }
 
-    private ResponseEntity<String> createURI(String path, String id) {
+    @PostMapping("/registration/{id}/proposalaccept/")
+    public ResponseEntity<String> proposalAcceptation(
+            @PathVariable String id,
+            @RequestBody @Valid @NotNull ProposalAcceptationDto proposalAcceptationDto)
+            throws JsonProcessingException {
+
+        if (proposalAcceptationDto.isAccept()) {
+            registrationService.acceptRegistration(id);
+        } else {
+            registrationService.rejectedRegistration(id);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    private <T> ResponseEntity<T> createURI(String path, String id, T body) {
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
                 .path(path)
                 .buildAndExpand(id)
                 .toUri();
 
-        return ResponseEntity.created(uri).body(id);
+        return ResponseEntity.created(uri).body(body);
     }
 }
