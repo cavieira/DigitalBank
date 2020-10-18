@@ -45,6 +45,9 @@ public class Registration {
     @OneToOne(mappedBy = "registration",cascade = CascadeType.ALL)
     private RegistrationAddress registrationAddress;
 
+    @OneToOne(mappedBy = "registration",cascade = CascadeType.ALL)
+    private RegistrationDocument registrationDocument;
+
     public Registration(String id, RegistrationDto registrationDto) {
         this.id = id;
         this.firstName = registrationDto.getFirstName();

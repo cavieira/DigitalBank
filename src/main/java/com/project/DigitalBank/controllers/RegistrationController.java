@@ -1,8 +1,8 @@
 package com.project.DigitalBank.controllers;
 
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
+import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
-import com.project.DigitalBank.models.RegistrationAddress;
 import com.project.DigitalBank.services.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,13 +26,7 @@ public class RegistrationController {
     public ResponseEntity<String> beginRegistration(@RequestBody @Valid @NotNull RegistrationDto registrationDto) {
         String id = registrationService.validateAndSaveIdentificationInformation(registrationDto);
 
-        URI uri = ServletUriComponentsBuilder
-                .fromCurrentContextPath()
-                .path("/registration/{id}/address/")
-                .buildAndExpand(id)
-                .toUri();
-
-        return ResponseEntity.created(uri).body(id);
+        return createURI("/registration/{id}/address/", id);
     }
 
     @PostMapping("/registration/{id}/address/")
@@ -41,9 +35,23 @@ public class RegistrationController {
             @RequestBody @Valid @NotNull RegistrationAddressDto registrationAddressDto) {
         registrationService.validateAndSaveAddressInformation(id, registrationAddressDto);
 
+        return createURI("/registration/{id}/document/", id);
+    }
+
+    @PostMapping("/registration/{id}/document/")
+    public ResponseEntity<String> documentRegistration(
+            @PathVariable String id,
+            @RequestBody @Valid @NotNull RegistrationDocumentDto registrationDocumentDto) {
+
+        registrationService.validateAndSaveCPFFile(id, registrationDocumentDto);
+
+        return createURI("/registration/{id}/proposalinfo/", id);
+    }
+
+    private ResponseEntity<String> createURI(String path, String id) {
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
-                .path("/registration/{id}/document/")
+                .path(path)
                 .buildAndExpand(id)
                 .toUri();
 
