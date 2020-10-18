@@ -1,6 +1,7 @@
 package com.project.DigitalBank.controllers;
 
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
+import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.services.RegistrationService;
@@ -40,8 +41,6 @@ class RegistrationControllerTest {
             .cpf(CPF)
             .build();
 
-    // private static final Registration REGISTRATION = new Registration(ID, REGISTRATION_DTO);
-
     private static final String CEP = "00000-000";
     private static final String RUA = "rua";
     private static final String BAIRRO = "bairro";
@@ -57,6 +56,13 @@ class RegistrationControllerTest {
             .complemento(COMPLEMENTO)
             .cidade(CIDADE)
             .estado(ESTADO)
+            .build();
+
+    private static final String DOCUMENT = "document";
+
+    private static final RegistrationDocumentDto REGISTRATION_DOCUMENT_DTO = RegistrationDocumentDto
+            .builder()
+            .document(DOCUMENT)
             .build();
 
     @Mock
@@ -104,6 +110,21 @@ class RegistrationControllerTest {
             assertEquals(ID, responseEntity.getBody());
 
             verify(registrationService).validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO);
+        }
+    }
+
+    @Nested
+    class documentRegistration {
+
+        @Test
+        void shouldReturnOkWhenArgumentsAreValid() {
+            doNothing().when(registrationService).validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO);
+
+            ResponseEntity<String> responseEntity = registrationController.documentRegistration(ID, REGISTRATION_DOCUMENT_DTO);
+
+            assertEquals(ID, responseEntity.getBody());
+
+            verify(registrationService).validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO);
         }
     }
 }

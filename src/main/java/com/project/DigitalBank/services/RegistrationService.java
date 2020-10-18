@@ -27,8 +27,7 @@ public class RegistrationService {
 
     private final UUIDService uuidService;
 
-    @Value(value = "${image.path:./img}")
-    private String imagePath;
+    private final RegistrationDocumentService registrationDocumentService;
 
     public String validateAndSaveIdentificationInformation(RegistrationDto registrationDto) {
 
@@ -82,19 +81,7 @@ public class RegistrationService {
         }
 
 
-        //Decode the String which is encoded by using Base64 class
-        byte[] imageByte = Base64.decodeBase64(registrationDocumentDto.getDocument());
-
-        //Create the file name where the image will be save
-        String document = String.format("%s%s%s", imagePath, id, ".jpg");
-
-        //Save the image
-        try {
-            new FileOutputStream(document).write(imageByte);
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Error while processing image ", e);
-        }
+        String document = registrationDocumentService.saveDocument(id, registrationDocumentDto.getDocument());
 
         RegistrationDocument registrationDocument = new RegistrationDocument(document);
 

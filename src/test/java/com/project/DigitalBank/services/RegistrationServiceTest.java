@@ -1,9 +1,11 @@
 package com.project.DigitalBank.services;
 
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
+import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.models.RegistrationAddress;
+import com.project.DigitalBank.models.RegistrationDocument;
 import com.project.DigitalBank.repositories.RegistrationRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import javax.swing.plaf.synth.Region;
 import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -57,12 +60,22 @@ class RegistrationServiceTest {
             .estado(ESTADO)
             .build();
 
+    private static final String DOCUMENT = "document";
+
+    private static final RegistrationDocumentDto REGISTRATION_DOCUMENT_DTO = RegistrationDocumentDto
+            .builder()
+            .document(DOCUMENT)
+            .build();
 
     @Mock
     private RegistrationRepository registrationRepository;
 
     @Mock
     private UUIDService uuidService;
+
+    @Mock
+    private RegistrationDocumentService registrationDocumentService;
+
 
     @InjectMocks
     private RegistrationService registrationService;
@@ -141,6 +154,58 @@ class RegistrationServiceTest {
             registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO);
 
             verify(registrationRepository).findById(ID);
+            verify(registrationRepository).save(registrationWithAddress);
+        }
+    }
+
+    @Nested
+    class ValidateAndSaveCPFFile {
+
+        @Test
+        void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
+
+            assertThrows(ValidationException.class,
+                    () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldThrowValidationExceptionWhenRegistrationAddressWasNotFound() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(REGISTRATION));
+
+            assertThrows(ValidationException.class,
+                    () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldSaveWhenArgumentsAreValid() {
+            RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
+
+            Registration registrationWithAddress = REGISTRATION
+                    .toBuilder()
+                    .registrationAddress(registrationAddress)
+                    .build();
+
+            registrationAddress.setRegistration(registrationWithAddress);
+
+
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(registrationWithAddress));
+
+            when(registrationDocumentService.saveDocument(ID, DOCUMENT)).thenReturn(DOCUMENT);
+
+            RegistrationDocument registrationDocument = new RegistrationDocument(DOCUMENT);
+            registrationDocument.setRegistration(registrationWithAddress);
+
+            when(registrationRepository.save(registrationWithAddress)).thenReturn(registrationWithAddress);
+
+            registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO);
+
+            verify(registrationRepository).findById(ID);
+            verify(registrationDocumentService).saveDocument(ID, DOCUMENT);
             verify(registrationRepository).save(registrationWithAddress);
         }
     }
