@@ -3,13 +3,12 @@ package com.project.DigitalBank.controllers;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
+import com.project.DigitalBank.dtos.RegistrationInformationDto;
+import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.services.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
@@ -46,6 +45,13 @@ public class RegistrationController {
         registrationService.validateAndSaveCPFFile(id, registrationDocumentDto);
 
         return createURI("/registration/{id}/proposalinfo/", id);
+    }
+
+    @GetMapping("/registration/{id}/proposalinfo/")
+    public RegistrationInformationDto proposalInformation(
+            @PathVariable String id) {
+
+        return registrationService.getRegistrationInfo(id);
     }
 
     private ResponseEntity<String> createURI(String path, String id) {

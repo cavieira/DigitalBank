@@ -3,6 +3,9 @@ package com.project.DigitalBank.services;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
+import com.project.DigitalBank.exceptions.RegistrationAddressNotCompleted;
+import com.project.DigitalBank.exceptions.RegistrationDocumentNotCompleted;
+import com.project.DigitalBank.exceptions.RegistrationNotFound;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.models.RegistrationAddress;
 import com.project.DigitalBank.models.RegistrationDocument;
@@ -14,13 +17,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.swing.plaf.synth.Region;
 import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 class RegistrationServiceTest {
@@ -85,7 +89,8 @@ class RegistrationServiceTest {
 
         @Test
         void shouldThrowValidationExceptionWhenCpfIsNotUnique() {
-            when(registrationRepository.findOneByCpf(CPF)).thenReturn(REGISTRATION);
+            Registration registration = buildRegistration();
+            when(registrationRepository.findOneByCpf(CPF)).thenReturn(registration);
 
             assertThrows(ValidationException.class,
                     () -> registrationService.validateAndSaveIdentificationInformation(REGISTRATION_DTO));
@@ -95,8 +100,9 @@ class RegistrationServiceTest {
 
         @Test
         void shouldThrowValidationExceptionWhenEmailIsNotUnique() {
+            Registration registration = buildRegistration();
             when(registrationRepository.findOneByCpf(CPF)).thenReturn(null);
-            when(registrationRepository.findOneByEmail(EMAIL)).thenReturn(REGISTRATION);
+            when(registrationRepository.findOneByEmail(EMAIL)).thenReturn(registration);
 
             assertThrows(ValidationException.class,
                     () -> registrationService.validateAndSaveIdentificationInformation(REGISTRATION_DTO));
@@ -107,8 +113,9 @@ class RegistrationServiceTest {
 
         @Test
         void shouldSaveWhenArgumentsAreValid() {
+            Registration registration = buildRegistration();
             when(uuidService.generate()).thenReturn(ID);
-            when(registrationRepository.save(REGISTRATION)).thenReturn(REGISTRATION);
+            when(registrationRepository.save(registration)).thenReturn(registration);
             when(registrationRepository.findOneByCpf(CPF)).thenReturn(null);
             when(registrationRepository.findOneByEmail(EMAIL)).thenReturn(null);
 
@@ -117,7 +124,7 @@ class RegistrationServiceTest {
             assertEquals(ID, id);
 
             verify(uuidService).generate();
-            verify(registrationRepository).save(REGISTRATION);
+            verify(registrationRepository).save(registration);
             verify(registrationRepository).findOneByCpf(CPF);
             verify(registrationRepository).findOneByEmail(EMAIL);
         }
@@ -130,7 +137,7 @@ class RegistrationServiceTest {
         void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
             when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
 
-            assertThrows(ValidationException.class,
+            assertThrows(RegistrationNotFound.class,
                     () -> registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -140,7 +147,7 @@ class RegistrationServiceTest {
         void shouldSaveWhenArgumentsAreValid() {
             RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
 
-            Registration registrationWithAddress = REGISTRATION
+            Registration registrationWithAddress = buildRegistration()
                     .toBuilder()
                     .registrationAddress(registrationAddress)
                     .build();
@@ -148,7 +155,7 @@ class RegistrationServiceTest {
             registrationAddress.setRegistration(registrationWithAddress);
 
 
-            when(registrationRepository.findById(ID)).thenReturn(Optional.of(REGISTRATION));
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration()));
             when(registrationRepository.save(registrationWithAddress)).thenReturn(registrationWithAddress);
 
             registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO);
@@ -165,7 +172,7 @@ class RegistrationServiceTest {
         void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
             when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
 
-            assertThrows(ValidationException.class,
+            assertThrows(RegistrationNotFound.class,
                     () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -173,9 +180,9 @@ class RegistrationServiceTest {
 
         @Test
         void shouldThrowValidationExceptionWhenRegistrationAddressWasNotFound() {
-            when(registrationRepository.findById(ID)).thenReturn(Optional.of(REGISTRATION));
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration()));
 
-            assertThrows(ValidationException.class,
+            assertThrows(RegistrationAddressNotCompleted.class,
                     () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -185,7 +192,7 @@ class RegistrationServiceTest {
         void shouldSaveWhenArgumentsAreValid() {
             RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
 
-            Registration registrationWithAddress = REGISTRATION
+            Registration registrationWithAddress = buildRegistration()
                     .toBuilder()
                     .registrationAddress(registrationAddress)
                     .build();
@@ -208,5 +215,52 @@ class RegistrationServiceTest {
             verify(registrationDocumentService).saveDocument(ID, DOCUMENT);
             verify(registrationRepository).save(registrationWithAddress);
         }
+    }
+
+    @Nested
+    class GetRegistrationInfo {
+
+        @Test
+        void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
+
+            assertThrows(RegistrationNotFound.class,
+                    () -> registrationService.getRegistrationInfo(ID));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldThrowValidationExceptionWhenRegistrationAddressWasNotFound() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration()));
+
+            assertThrows(RegistrationAddressNotCompleted.class,
+                    () -> registrationService.getRegistrationInfo(ID));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldThrowValidationExceptionWhenRegistrationDocumentWasNotFound() {
+            RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
+
+            Registration registrationWithAddress = buildRegistration()
+                    .toBuilder()
+                    .registrationAddress(registrationAddress)
+                    .build();
+
+            registrationAddress.setRegistration(registrationWithAddress);
+
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(registrationWithAddress));
+
+            assertThrows(RegistrationDocumentNotCompleted.class,
+                    () -> registrationService.getRegistrationInfo(ID));
+
+            verify(registrationRepository).findById(ID);
+        }
+    }
+
+    private Registration buildRegistration() {
+        return REGISTRATION.toBuilder().build();
     }
 }

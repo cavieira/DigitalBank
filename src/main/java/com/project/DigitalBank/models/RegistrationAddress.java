@@ -1,5 +1,6 @@
 package com.project.DigitalBank.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
 import lombok.*;
@@ -43,6 +44,7 @@ public class RegistrationAddress {
     @MapsId
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @JsonIgnore
     private Registration registration;
 
     public RegistrationAddress(RegistrationAddressDto registrationAddressDto) {

@@ -3,6 +3,7 @@ package com.project.DigitalBank.controllers;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
+import com.project.DigitalBank.dtos.RegistrationInformationDto;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.services.RegistrationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +66,21 @@ class RegistrationControllerTest {
             .document(DOCUMENT)
             .build();
 
+    private static final RegistrationInformationDto REGISTRATION_INFORMATION_DTO = RegistrationInformationDto
+            .builder()
+            .firstName(FIRST_NAME)
+            .lastName(LAST_NAME)
+            .email(EMAIL)
+            .birthDate(BIRTH_DATE)
+            .cpf(CPF)
+            .cep(CEP)
+            .rua(RUA)
+            .bairro(BAIRRO)
+            .complemento(COMPLEMENTO)
+            .cidade(CIDADE)
+            .estado(ESTADO)
+            .build();
+
     @Mock
     private RegistrationService registrationService;
 
@@ -125,6 +141,20 @@ class RegistrationControllerTest {
             assertEquals(ID, responseEntity.getBody());
 
             verify(registrationService).validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO);
+        }
+    }
+
+    @Nested
+    class proposalInformation {
+
+        @Test
+        void shouldReturnRegistrationInformation() {
+            when(registrationService.getRegistrationInfo(ID)).thenReturn(REGISTRATION_INFORMATION_DTO);
+
+            RegistrationInformationDto registrationInformationDto = registrationController.proposalInformation(ID);
+
+            verify(registrationService).getRegistrationInfo(ID);
+            assertEquals(REGISTRATION_INFORMATION_DTO, registrationInformationDto);
         }
     }
 }
