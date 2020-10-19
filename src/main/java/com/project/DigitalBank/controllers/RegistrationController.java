@@ -57,11 +57,14 @@ public class RegistrationController {
             @PathVariable String id,
             @RequestBody @Valid @NotNull ProposalAcceptationDto proposalAcceptationDto)
             throws JsonProcessingException {
-
+        ProposalAcceptationDto proposalAcceptationDtoWithId = proposalAcceptationDto
+                .toBuilder()
+                .id(id)
+                .build();
         if (proposalAcceptationDto.isAccept()) {
-            registrationService.acceptRegistration(id);
+            registrationService.acceptRegistration(proposalAcceptationDtoWithId);
         } else {
-            registrationService.rejectedRegistration(id);
+            registrationService.rejectedRegistration(proposalAcceptationDtoWithId);
         }
 
         return ResponseEntity.ok().build();

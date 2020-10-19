@@ -1,6 +1,7 @@
 package com.project.DigitalBank.models;
 
 import com.project.DigitalBank.dtos.RegistrationDto;
+import com.project.DigitalBank.enumerations.RegistrationStatus;
 import com.project.DigitalBank.validations.LegalAge;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,11 +43,17 @@ public class Registration {
     @Pattern(regexp = "^[0-9]{11}$")
     private String cpf;
 
+    @NotNull
+    private RegistrationStatus registrationStatus;
+
     @OneToOne(mappedBy = "registration", cascade = CascadeType.ALL)
     private RegistrationAddress registrationAddress;
 
     @OneToOne(mappedBy = "registration", cascade = CascadeType.ALL)
     private RegistrationDocument registrationDocument;
+
+    @OneToOne(mappedBy = "registration", cascade = CascadeType.ALL)
+    private Account account;
 
     public Registration(String id, RegistrationDto registrationDto) {
         this.id = id;
@@ -55,5 +62,6 @@ public class Registration {
         this.email = registrationDto.getEmail();
         this.birthDate = registrationDto.getBirthDate();
         this.cpf = registrationDto.getCpf();
+        this.registrationStatus = RegistrationStatus.INICIADO;
     }
 }

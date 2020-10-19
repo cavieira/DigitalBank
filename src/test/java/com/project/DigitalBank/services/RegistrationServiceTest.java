@@ -3,9 +3,10 @@ package com.project.DigitalBank.services;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
-import com.project.DigitalBank.exceptions.RegistrationAddressNotCompleted;
-import com.project.DigitalBank.exceptions.RegistrationDocumentNotCompleted;
+import com.project.DigitalBank.enumerations.RegistrationStatus;
 import com.project.DigitalBank.exceptions.RegistrationNotFound;
+import com.project.DigitalBank.exceptions.RegistrationRequiredStepNotCompleted;
+import com.project.DigitalBank.exceptions.RegistrationStepAlreadyCompleted;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.models.RegistrationAddress;
 import com.project.DigitalBank.models.RegistrationDocument;
@@ -124,7 +125,10 @@ class RegistrationServiceTest {
             assertEquals(ID, id);
 
             verify(uuidService).generate();
-            verify(registrationRepository).save(registration);
+            verify(registrationRepository).save(registration
+                    .toBuilder()
+                    .registrationStatus(RegistrationStatus.INICIADO_INFORMACOES)
+                    .build());
             verify(registrationRepository).findOneByCpf(CPF);
             verify(registrationRepository).findOneByEmail(EMAIL);
         }
@@ -144,10 +148,20 @@ class RegistrationServiceTest {
         }
 
         @Test
+        void shouldThrowRegistrationStepAlreadyCompletedExceptionWhenRegistrationAddressStepAlreadyCompleted() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.INICIADO_ENDERECO)));
+
+            assertThrows(RegistrationStepAlreadyCompleted.class,
+                    () -> registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
         void shouldSaveWhenArgumentsAreValid() {
             RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
 
-            Registration registrationWithAddress = buildRegistration()
+            Registration registrationWithAddress = buildRegistration(RegistrationStatus.INICIADO_INFORMACOES)
                     .toBuilder()
                     .registrationAddress(registrationAddress)
                     .build();
@@ -161,7 +175,10 @@ class RegistrationServiceTest {
             registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO);
 
             verify(registrationRepository).findById(ID);
-            verify(registrationRepository).save(registrationWithAddress);
+            verify(registrationRepository).save(registrationWithAddress
+                    .toBuilder()
+                    .registrationStatus(RegistrationStatus.INICIADO_ENDERECO)
+                    .build());
         }
     }
 
@@ -179,10 +196,22 @@ class RegistrationServiceTest {
         }
 
         @Test
-        void shouldThrowValidationExceptionWhenRegistrationAddressWasNotFound() {
-            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration()));
+        void shouldThrowRegistrationRequiredStepNotCompletedWhenRegistrationAddressStepWasNotCompleted() {
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(buildRegistration(RegistrationStatus.INICIADO_INFORMACOES)));
 
-            assertThrows(RegistrationAddressNotCompleted.class,
+            assertThrows(RegistrationRequiredStepNotCompleted.class,
+                    () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldThrowRegistrationStepAlreadyCompletedWhenRegistrationDocumentStepWasCompleted() {
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(buildRegistration(RegistrationStatus.PENDENTE)));
+
+            assertThrows(RegistrationStepAlreadyCompleted.class,
                     () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -192,7 +221,7 @@ class RegistrationServiceTest {
         void shouldSaveWhenArgumentsAreValid() {
             RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
 
-            Registration registrationWithAddress = buildRegistration()
+            Registration registrationWithAddress = buildRegistration(RegistrationStatus.INICIADO_ENDERECO)
                     .toBuilder()
                     .registrationAddress(registrationAddress)
                     .build();
@@ -231,29 +260,20 @@ class RegistrationServiceTest {
         }
 
         @Test
-        void shouldThrowValidationExceptionWhenRegistrationAddressWasNotFound() {
-            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration()));
+        void shouldThrowRegistrationRequiredStepNotCompletedWhenRegistrationDocumentStepWasNotCompleted() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.INICIADO_ENDERECO)));
 
-            assertThrows(RegistrationAddressNotCompleted.class,
+            assertThrows(RegistrationRequiredStepNotCompleted.class,
                     () -> registrationService.getRegistrationInfo(ID));
 
             verify(registrationRepository).findById(ID);
         }
 
         @Test
-        void shouldThrowValidationExceptionWhenRegistrationDocumentWasNotFound() {
-            RegistrationAddress registrationAddress = new RegistrationAddress(REGISTRATION_ADDRESS_DTO);
+        void shouldThrowRegistrationStepAlreadyCompletedWhenRegistrationProposalStepWasCompleted() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.ACEITO)));
 
-            Registration registrationWithAddress = buildRegistration()
-                    .toBuilder()
-                    .registrationAddress(registrationAddress)
-                    .build();
-
-            registrationAddress.setRegistration(registrationWithAddress);
-
-            when(registrationRepository.findById(ID)).thenReturn(Optional.of(registrationWithAddress));
-
-            assertThrows(RegistrationDocumentNotCompleted.class,
+            assertThrows(RegistrationStepAlreadyCompleted.class,
                     () -> registrationService.getRegistrationInfo(ID));
 
             verify(registrationRepository).findById(ID);
@@ -262,5 +282,12 @@ class RegistrationServiceTest {
 
     private Registration buildRegistration() {
         return REGISTRATION.toBuilder().build();
+    }
+
+    private Registration buildRegistration(RegistrationStatus registrationStatus) {
+        return REGISTRATION
+                .toBuilder()
+                .registrationStatus(registrationStatus)
+                .build();
     }
 }

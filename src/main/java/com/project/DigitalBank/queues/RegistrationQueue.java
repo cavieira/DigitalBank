@@ -9,10 +9,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RegistrationQueue {
 
-    public static final String NAME = "registration";
+    public static final String ACCEPTED = "registration-accepted";
+    public static final String REJECTED = "registration-rejected";
 
     @Bean
-    public Queue queue() {
-        return new Queue(NAME, false);
+    public Queue acceptedQueue() {
+        return new Queue(ACCEPTED, false);
+    }
+
+    @Bean
+    public Queue rejectedQueue() {
+        return new Queue(REJECTED, false);
     }
 }
