@@ -4,12 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.DigitalBank.dtos.*;
 import com.project.DigitalBank.enumerations.RegistrationStatus;
 import com.project.DigitalBank.exceptions.RegistrationDocumentValidationFailed;
-import com.project.DigitalBank.exceptions.RegistrationNotFound;
+import com.project.DigitalBank.exceptions.EntityNotFound;
 import com.project.DigitalBank.exceptions.RegistrationRequiredStepNotCompleted;
 import com.project.DigitalBank.exceptions.RegistrationStepAlreadyCompleted;
-import com.project.DigitalBank.models.Registration;
-import com.project.DigitalBank.models.RegistrationAddress;
-import com.project.DigitalBank.models.RegistrationDocument;
+import com.project.DigitalBank.models.*;
 import com.project.DigitalBank.repositories.RegistrationRepository;
 import com.project.DigitalBank.senders.RegistrationSender;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +32,8 @@ public class RegistrationService {
     private final EmailService emailService;
 
     private final AccountService accountService;
+
+    private final UserService userService;
 
     public String validateAndSaveIdentificationInformation(RegistrationDto registrationDto) {
         if (repository.findOneByCpf(registrationDto.getCpf()) != null) {
@@ -126,7 +126,26 @@ public class RegistrationService {
         //Busca proposta
         Registration registration = getRegistrationWhenProposalAccepted(proposalAcceptationDto.getId());
 
-        accountService.createAccount(registration);
+        Account account = accountService.createAccount(registration);
+        User user = userService.createUser(registration);
+
+        user.setAccount(account);
+
+        account.setUser(user);
+        account.setRegistration(registration);
+
+        registration.setAccount(account);
+        registration.setRegistrationStatus(RegistrationStatus.COMPLETO);
+
+        repository.save(registration);
+
+        // Mandar email de confirmação
+        emailService.sendAccountCreated(AccountInformationDto.builder()
+                .firstName(registration.getFirstName())
+                .email(registration.getEmail())
+                .accountNumber(account.getAccountNumber())
+                .branchNumber(account.getBranchNumber())
+                .build());
     }
 
     public void rejectedRegistration(ProposalAcceptationDto proposalAcceptationDto)
@@ -146,7 +165,7 @@ public class RegistrationService {
         var queryResult = repository.findById(id);
 
         if (queryResult.isEmpty()) {
-            throw new RegistrationNotFound("Favor cadastrar as informações básicas antes de cadastrar o endereço.");
+            throw new EntityNotFound("Favor cadastrar as informações básicas antes de cadastrar o endereço.");
         }
 
         var registration = queryResult.get();
@@ -162,7 +181,7 @@ public class RegistrationService {
         var queryResult = repository.findById(id);
 
         if (queryResult.isEmpty()) {
-            throw new RegistrationNotFound("Favor cadastrar as informações básicas antes de enviar o CPF.");
+            throw new EntityNotFound("Favor cadastrar as informações básicas antes de enviar o CPF.");
         }
 
         var registration = queryResult.get();
@@ -183,7 +202,7 @@ public class RegistrationService {
         var queryResult = repository.findById(id);
 
         if (queryResult.isEmpty()) {
-            throw new RegistrationNotFound("Favor cadastrar as informações básicas.");
+            throw new EntityNotFound("Favor cadastrar as informações básicas.");
         }
 
         var registration = queryResult.get();
@@ -204,7 +223,7 @@ public class RegistrationService {
         var queryResult = repository.findById(id);
 
         if (queryResult.isEmpty()) {
-            throw new RegistrationNotFound("Favor cadastrar as informações básicas.");
+            throw new EntityNotFound("Favor cadastrar as informações básicas.");
         }
 
         var registration = queryResult.get();

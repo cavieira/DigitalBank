@@ -3,10 +3,7 @@ package com.project.DigitalBank.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
@@ -18,6 +15,7 @@ public class RegistrationDocument {
 
     @NotNull
     @Id
+    @Column(name = "id")
     private String id;
 
     @NotNull
@@ -25,6 +23,7 @@ public class RegistrationDocument {
 
     @OneToOne
     @MapsId
+    @JoinColumn(name = "id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore

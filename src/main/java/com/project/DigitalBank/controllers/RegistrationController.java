@@ -6,11 +6,11 @@ import com.project.DigitalBank.services.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.net.URI;
+
+import static com.project.DigitalBank.utils.URIUtils.createURI;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,7 +45,7 @@ public class RegistrationController {
         return createURI("/registration/{id}/proposalinfo/", id, id);
     }
 
-    @GetMapping("registration//{id}/proposalinfo/")
+    @GetMapping("registration/{id}/proposalinfo/")
     public ResponseEntity<RegistrationInformationDto> proposalInformation(
             @PathVariable String id) {
         RegistrationInformationDto information = registrationService.getRegistrationInfo(id);
@@ -68,15 +68,5 @@ public class RegistrationController {
         }
 
         return ResponseEntity.ok().build();
-    }
-
-    private <T> ResponseEntity<T> createURI(String path, String id, T body) {
-        URI uri = ServletUriComponentsBuilder
-                .fromCurrentContextPath()
-                .path(path)
-                .buildAndExpand(id)
-                .toUri();
-
-        return ResponseEntity.created(uri).body(body);
     }
 }

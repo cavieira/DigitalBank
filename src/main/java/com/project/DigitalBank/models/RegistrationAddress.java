@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
@@ -19,6 +16,7 @@ public class RegistrationAddress {
 
     @NotNull
     @Id
+    @Column(name = "id")
     private String id;
 
     @NotNull
@@ -41,6 +39,7 @@ public class RegistrationAddress {
 
     @OneToOne
     @MapsId
+    @JoinColumn(name = "id")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore

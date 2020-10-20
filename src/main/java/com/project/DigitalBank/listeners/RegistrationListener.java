@@ -29,7 +29,6 @@ public class RegistrationListener {
     @RabbitListener(queues = RegistrationQueue.REJECTED)
     public void listenRejected(String message) throws JsonProcessingException {
         registrationService.sendRejectedEmail(deserialize(message));
-        // registrationService.createAccount(deserialize(message));
     }
 }
 

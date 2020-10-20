@@ -1,19 +1,21 @@
 package com.project.DigitalBank.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.project.DigitalBank.enumerations.UserStatus;
 import lombok.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.math.BigDecimal;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class Account {
+public class User {
 
     @NotNull
     @Id
@@ -21,19 +23,24 @@ public class Account {
     private String id;
 
     @NotNull
-    @Size(min = 4, max = 4)
-    String branchNumber;
+    private String firstName;
 
     @NotNull
+    @Email
+    private String email;
+
+    @NotNull
+    @Pattern(regexp = "^[0-9]{11}$")
+    private String cpf;
+
+    @Size(min = 6, max = 6)
+    private String firstAccessToken;
+
     @Size(min = 8, max = 8)
-    String accountNumber;
+    private String password;
 
     @NotNull
-    @Size(min = 3, max = 3)
-    String bankCode;
-
-    @NotNull
-    BigDecimal balance;
+    private UserStatus userStatus;
 
     @OneToOne
     @MapsId
@@ -41,8 +48,5 @@ public class Account {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private Registration registration;
-
-    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
-    private User user;
+    private Account account;
 }

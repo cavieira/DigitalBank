@@ -4,7 +4,7 @@ import com.project.DigitalBank.dtos.RegistrationAddressDto;
 import com.project.DigitalBank.dtos.RegistrationDocumentDto;
 import com.project.DigitalBank.dtos.RegistrationDto;
 import com.project.DigitalBank.enumerations.RegistrationStatus;
-import com.project.DigitalBank.exceptions.RegistrationNotFound;
+import com.project.DigitalBank.exceptions.EntityNotFound;
 import com.project.DigitalBank.exceptions.RegistrationRequiredStepNotCompleted;
 import com.project.DigitalBank.exceptions.RegistrationStepAlreadyCompleted;
 import com.project.DigitalBank.models.Registration;
@@ -141,7 +141,7 @@ class RegistrationServiceTest {
         void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
             when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
 
-            assertThrows(RegistrationNotFound.class,
+            assertThrows(EntityNotFound.class,
                     () -> registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -189,7 +189,7 @@ class RegistrationServiceTest {
         void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
             when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
 
-            assertThrows(RegistrationNotFound.class,
+            assertThrows(EntityNotFound.class,
                     () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -253,7 +253,7 @@ class RegistrationServiceTest {
         void shouldThrowValidationExceptionWhenRegistrationWasNotFound() {
             when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
 
-            assertThrows(RegistrationNotFound.class,
+            assertThrows(EntityNotFound.class,
                     () -> registrationService.getRegistrationInfo(ID));
 
             verify(registrationRepository).findById(ID);

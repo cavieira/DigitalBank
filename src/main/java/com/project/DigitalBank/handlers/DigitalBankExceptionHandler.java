@@ -1,5 +1,6 @@
 package com.project.DigitalBank.handlers;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.project.DigitalBank.dtos.ErrorDto;
 import com.project.DigitalBank.exceptions.*;
 import org.springframework.http.HttpStatus;
@@ -35,8 +36,8 @@ public class DigitalBankExceptionHandler {
         return ResponseEntity.badRequest().body(ErrorDto.<String>builder().error(exception.getMessage()).build());
     }
 
-    @ExceptionHandler(value = RegistrationNotFound.class)
-    public ResponseEntity<?> handleRegistrationNotFound(RegistrationNotFound exception) {
+    @ExceptionHandler(value = EntityNotFound.class)
+    public ResponseEntity<?> handleRegistrationNotFound(EntityNotFound exception) {
         return ResponseEntity.notFound().build();
     }
 
@@ -53,5 +54,10 @@ public class DigitalBankExceptionHandler {
     @ExceptionHandler(value = RegistrationDocumentValidationFailed.class)
     public ResponseEntity<ErrorDto<String>> handleRegistrationDocumentSaveFailed(RegistrationDocumentValidationFailed exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorDto.<String>builder().error(exception.getMessage()).build());
+    }
+
+    @ExceptionHandler(JsonMappingException.class) // Or whatever exception type you want to handle
+    public ResponseEntity<ErrorDto<String>> handleConverterErrors(JsonMappingException exception) { // Or whatever exception type you want to handle
+        return ResponseEntity.badRequest().body(ErrorDto.<String>builder().error(exception.getMessage()).build());
     }
 }

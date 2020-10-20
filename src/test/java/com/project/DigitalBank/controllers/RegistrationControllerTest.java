@@ -1,9 +1,7 @@
 package com.project.DigitalBank.controllers;
 
-import com.project.DigitalBank.dtos.RegistrationAddressDto;
-import com.project.DigitalBank.dtos.RegistrationDocumentDto;
-import com.project.DigitalBank.dtos.RegistrationDto;
-import com.project.DigitalBank.dtos.RegistrationInformationDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.project.DigitalBank.dtos.*;
 import com.project.DigitalBank.services.RegistrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -78,6 +76,17 @@ class RegistrationControllerTest {
             .complemento(COMPLEMENTO)
             .cidade(CIDADE)
             .estado(ESTADO)
+            .build();
+
+    private static final ProposalAcceptationDto PROPOSAL_ACCEPTATION_DTO = ProposalAcceptationDto
+            .builder()
+            .accept(true)
+            .build();
+
+    private static final ProposalAcceptationDto PROPOSAL_ACCEPTATION_DTO_WITH_ID = ProposalAcceptationDto
+            .builder()
+            .accept(true)
+            .id(ID)
             .build();
 
     @Mock
@@ -156,5 +165,19 @@ class RegistrationControllerTest {
 
             verify(registrationService).getRegistrationInfo(ID);
         }
+    }
+
+    @Nested
+    class proposalAcceptation {
+
+        @Test
+        void shouldReturnOkWhenArgumentsAreValid() throws JsonProcessingException {
+            doNothing().when(registrationService).acceptRegistration(PROPOSAL_ACCEPTATION_DTO_WITH_ID);
+
+            ResponseEntity<String> responseEntity = registrationController.proposalAcceptation(ID, PROPOSAL_ACCEPTATION_DTO);
+
+            verify(registrationService).acceptRegistration(PROPOSAL_ACCEPTATION_DTO_WITH_ID);
+        }
+
     }
 }
