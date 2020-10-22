@@ -6,7 +6,7 @@ import com.project.DigitalBank.dtos.RegistrationDto;
 import com.project.DigitalBank.enumerations.RegistrationStatus;
 import com.project.DigitalBank.exceptions.EntityNotFound;
 import com.project.DigitalBank.exceptions.RegistrationRequiredStepNotCompleted;
-import com.project.DigitalBank.exceptions.RegistrationStepAlreadyCompleted;
+import com.project.DigitalBank.exceptions.EntityStepAlreadyCompleted;
 import com.project.DigitalBank.models.Registration;
 import com.project.DigitalBank.models.RegistrationAddress;
 import com.project.DigitalBank.models.RegistrationDocument;
@@ -151,7 +151,7 @@ class RegistrationServiceTest {
         void shouldThrowRegistrationStepAlreadyCompletedExceptionWhenRegistrationAddressStepAlreadyCompleted() {
             when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.INICIADO_ENDERECO)));
 
-            assertThrows(RegistrationStepAlreadyCompleted.class,
+            assertThrows(EntityStepAlreadyCompleted.class,
                     () -> registrationService.validateAndSaveAddressInformation(ID, REGISTRATION_ADDRESS_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -211,7 +211,7 @@ class RegistrationServiceTest {
             when(registrationRepository.findById(ID))
                     .thenReturn(Optional.of(buildRegistration(RegistrationStatus.PENDENTE)));
 
-            assertThrows(RegistrationStepAlreadyCompleted.class,
+            assertThrows(EntityStepAlreadyCompleted.class,
                     () -> registrationService.validateAndSaveCPFFile(ID, REGISTRATION_DOCUMENT_DTO));
 
             verify(registrationRepository).findById(ID);
@@ -273,7 +273,7 @@ class RegistrationServiceTest {
         void shouldThrowRegistrationStepAlreadyCompletedWhenRegistrationProposalStepWasCompleted() {
             when(registrationRepository.findById(ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.ACEITO)));
 
-            assertThrows(RegistrationStepAlreadyCompleted.class,
+            assertThrows(EntityStepAlreadyCompleted.class,
                     () -> registrationService.getRegistrationInfo(ID));
 
             verify(registrationRepository).findById(ID);

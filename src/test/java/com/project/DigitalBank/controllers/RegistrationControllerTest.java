@@ -3,17 +3,13 @@ package com.project.DigitalBank.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.DigitalBank.dtos.*;
 import com.project.DigitalBank.services.RegistrationService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDate;
 
@@ -21,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
-class RegistrationControllerTest {
+class RegistrationControllerTest extends BaseControllerTest {
 
     private static final String ID = "id";
     private static final String FIRST_NAME = "firstName";
@@ -95,18 +91,6 @@ class RegistrationControllerTest {
     @InjectMocks
     private RegistrationController registrationController;
 
-    private MockHttpServletRequest mockRequest;
-
-    @BeforeEach
-    public void setUp() {
-        mockRequest = new MockHttpServletRequest();
-        mockRequest.setContextPath("/your-app-context");
-
-        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
-
-        RequestContextHolder.setRequestAttributes(attrs);
-    }
-
     @Nested
     class beginRegistration {
 
@@ -171,12 +155,26 @@ class RegistrationControllerTest {
     class proposalAcceptation {
 
         @Test
-        void shouldReturnOkWhenArgumentsAreValid() throws JsonProcessingException {
+        void shouldCallAcceptAndReturnOkWhenArgumentsAreValid() throws JsonProcessingException {
             doNothing().when(registrationService).acceptRegistration(PROPOSAL_ACCEPTATION_DTO_WITH_ID);
 
             ResponseEntity<String> responseEntity = registrationController.proposalAcceptation(ID, PROPOSAL_ACCEPTATION_DTO);
 
             verify(registrationService).acceptRegistration(PROPOSAL_ACCEPTATION_DTO_WITH_ID);
+        }
+
+        @Test
+        void shouldCallRejectAndReturnOkWhenArgumentsAreValid() throws JsonProcessingException {
+            var proposalAcceptationDto = PROPOSAL_ACCEPTATION_DTO_WITH_ID
+                    .toBuilder()
+                    .accept(false)
+                    .build();
+
+            doNothing().when(registrationService).rejectedRegistration(proposalAcceptationDto);
+
+            ResponseEntity<String> responseEntity = registrationController.proposalAcceptation(ID, proposalAcceptationDto);
+
+            verify(registrationService).rejectedRegistration(proposalAcceptationDto);
         }
 
     }

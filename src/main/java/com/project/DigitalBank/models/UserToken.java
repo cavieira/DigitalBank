@@ -5,17 +5,16 @@ import com.project.DigitalBank.enumerations.UserStatus;
 import lombok.*;
 
 import javax.persistence.*;
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class User {
+public class UserToken {
 
     @NotNull
     @Id
@@ -23,17 +22,14 @@ public class User {
     private String id;
 
     @NotNull
-    private String firstName;
+    @Size(min = 6, max = 6)
+    private String firstAccessToken;
 
     @NotNull
-    @Email
-    private String email;
+    private LocalDateTime dateOfCreation;
 
     @NotNull
-    @Pattern(regexp = "^[0-9]{11}$")
-    private String cpf;
-
-    private String password;
+    private UserStatus userStatus;
 
     @OneToOne
     @MapsId
@@ -41,8 +37,5 @@ public class User {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
-    private Account account;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserToken userToken;
+    private User user;
 }

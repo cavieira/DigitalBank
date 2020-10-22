@@ -6,7 +6,7 @@ import com.project.DigitalBank.enumerations.RegistrationStatus;
 import com.project.DigitalBank.exceptions.RegistrationDocumentValidationFailed;
 import com.project.DigitalBank.exceptions.EntityNotFound;
 import com.project.DigitalBank.exceptions.RegistrationRequiredStepNotCompleted;
-import com.project.DigitalBank.exceptions.RegistrationStepAlreadyCompleted;
+import com.project.DigitalBank.exceptions.EntityStepAlreadyCompleted;
 import com.project.DigitalBank.models.*;
 import com.project.DigitalBank.repositories.RegistrationRepository;
 import com.project.DigitalBank.senders.RegistrationSender;
@@ -126,7 +126,7 @@ public class RegistrationService {
         //Busca proposta
         Registration registration = getRegistrationWhenProposalAccepted(proposalAcceptationDto.getId());
 
-        Account account = accountService.createAccount(registration);
+        Account account = accountService.createAccount();
         User user = userService.createUser(registration);
 
         user.setAccount(account);
@@ -171,7 +171,7 @@ public class RegistrationService {
         var registration = queryResult.get();
 
         if (registration.getRegistrationStatus().after(RegistrationStatus.INICIADO_INFORMACOES)) {
-            throw new RegistrationStepAlreadyCompleted("Você já cadastrou o endereço anteriormente");
+            throw new EntityStepAlreadyCompleted("Você já cadastrou o endereço anteriormente");
         }
 
         return registration;
@@ -191,7 +191,7 @@ public class RegistrationService {
         }
 
         if (registration.getRegistrationStatus().after(RegistrationStatus.INICIADO_ENDERECO)) {
-            throw new RegistrationStepAlreadyCompleted("Você já enviou seu CPF");
+            throw new EntityStepAlreadyCompleted("Você já enviou seu CPF");
         }
 
         return registration;
@@ -212,7 +212,7 @@ public class RegistrationService {
         }
 
         if (registration.getRegistrationStatus().after(RegistrationStatus.PENDENTE)) {
-            throw new RegistrationStepAlreadyCompleted("Você já aceitou a proposta");
+            throw new EntityStepAlreadyCompleted("Você já aceitou a proposta");
         }
 
         return registration;
@@ -233,7 +233,7 @@ public class RegistrationService {
         }
 
         if (registration.getRegistrationStatus().after(RegistrationStatus.ACEITO)) {
-            throw new RegistrationStepAlreadyCompleted("Você já completou a sua proposta");
+            throw new EntityStepAlreadyCompleted("Você já completou a sua proposta");
         }
 
         return registration;

@@ -1,5 +1,6 @@
 package com.project.DigitalBank.handlers;
 
+import antlr.Token;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.project.DigitalBank.dtos.ErrorDto;
 import com.project.DigitalBank.exceptions.*;
@@ -41,7 +42,7 @@ public class DigitalBankExceptionHandler {
         return ResponseEntity.notFound().build();
     }
 
-    @ExceptionHandler(value = {RegistrationRequiredStepNotCompleted.class, RegistrationStepAlreadyCompleted.class})
+    @ExceptionHandler(value = {RegistrationRequiredStepNotCompleted.class, EntityStepAlreadyCompleted.class})
     public ResponseEntity<ErrorDto<String>> handleRegistrationAddressNotCompleted(RegistrationStepUnprocessable exception) {
         return ResponseEntity.unprocessableEntity().body(ErrorDto.<String>builder().error(exception.getMessage()).build());
     }
@@ -54,6 +55,11 @@ public class DigitalBankExceptionHandler {
     @ExceptionHandler(value = RegistrationDocumentValidationFailed.class)
     public ResponseEntity<ErrorDto<String>> handleRegistrationDocumentSaveFailed(RegistrationDocumentValidationFailed exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorDto.<String>builder().error(exception.getMessage()).build());
+    }
+
+    @ExceptionHandler(value = TokenInvalid.class)
+    public ResponseEntity<ErrorDto<String>> handleTokenInvalid(TokenInvalid exception) {
+        return ResponseEntity.badRequest().body(ErrorDto.<String>builder().error(exception.getMessage()).build());
     }
 
     @ExceptionHandler(JsonMappingException.class) // Or whatever exception type you want to handle

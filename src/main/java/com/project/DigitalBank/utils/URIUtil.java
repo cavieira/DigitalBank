@@ -5,7 +5,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
-public class URIUtils {
+public class URIUtil {
 
     public static  <T> ResponseEntity<T> createURI(String path, String id, T body) {
         URI uri = ServletUriComponentsBuilder

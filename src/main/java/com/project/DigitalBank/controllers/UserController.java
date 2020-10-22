@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import static com.project.DigitalBank.utils.URIUtils.createURI;
+import static com.project.DigitalBank.utils.URIUtil.createURI;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,6 +34,7 @@ public class UserController {
             @PathVariable String id,
             @RequestBody @Valid @NotNull TokenInformationDto tokenInformationDto) {
 
+        userService.validateAndCreatePassword(id, tokenInformationDto);
 
         return ResponseEntity.ok().build();
     }
