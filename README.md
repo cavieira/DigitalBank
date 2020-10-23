@@ -8,7 +8,9 @@ Ela consiste num protótipo para operações básicas de um banco digital. As fu
 
 A implementação foi realizada em Java utilizando o framework Spring. Como servidor de messageria foi utilizado o RabbitMQ.
 
-A API foi estruturada de acordo com o padrão MVC (Model-View-Controller), essa estrutura consiste nas seguintes camadas:
+A API foi estruturada de acordo com o padrão MVC (Model-View-Controller), que consiste nos seguintes packages principais:
+
+- **dtos**: contém as classes que encapsulam as informações para comunicação entre o cliente e o servidor.
 
 
 
