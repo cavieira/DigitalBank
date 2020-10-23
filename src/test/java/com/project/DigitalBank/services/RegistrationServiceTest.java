@@ -1,21 +1,21 @@
 package com.project.DigitalBank.services;
 
-import com.project.DigitalBank.dtos.RegistrationAddressDto;
-import com.project.DigitalBank.dtos.RegistrationDocumentDto;
-import com.project.DigitalBank.dtos.RegistrationDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.project.DigitalBank.dtos.*;
 import com.project.DigitalBank.enumerations.RegistrationStatus;
 import com.project.DigitalBank.exceptions.EntityNotFound;
+import com.project.DigitalBank.exceptions.RegistrationDocumentValidationFailed;
 import com.project.DigitalBank.exceptions.RegistrationRequiredStepNotCompleted;
 import com.project.DigitalBank.exceptions.EntityStepAlreadyCompleted;
-import com.project.DigitalBank.models.Registration;
-import com.project.DigitalBank.models.RegistrationAddress;
-import com.project.DigitalBank.models.RegistrationDocument;
+import com.project.DigitalBank.models.*;
 import com.project.DigitalBank.repositories.RegistrationRepository;
+import com.project.DigitalBank.senders.RegistrationSender;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.validation.ValidationException;
@@ -24,8 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 class RegistrationServiceTest {
@@ -72,6 +71,27 @@ class RegistrationServiceTest {
             .document(DOCUMENT)
             .build();
 
+    private static final ProposalAcceptationDto PROPOSAL_ACCEPTATION_DTO = ProposalAcceptationDto
+            .builder()
+            .accept(false)
+            .id(ID)
+            .build();
+
+    private static final RegistrationInformationDto REGISTRATION_INFORMATION_DTO = RegistrationInformationDto
+            .builder()
+            .firstName(FIRST_NAME)
+            .lastName(LAST_NAME)
+            .email(EMAIL)
+            .birthDate(BIRTH_DATE)
+            .cpf(CPF)
+            .cep(CEP)
+            .rua(RUA)
+            .bairro(BAIRRO)
+            .complemento(COMPLEMENTO)
+            .cidade(CIDADE)
+            .estado(ESTADO)
+            .build();
+
     @Mock
     private RegistrationRepository registrationRepository;
 
@@ -80,6 +100,21 @@ class RegistrationServiceTest {
 
     @Mock
     private RegistrationDocumentService registrationDocumentService;
+
+    @Mock
+    private EmailService emailService;
+
+    @Mock
+    private DocumentValidationService documentValidationService;
+
+    @Mock
+    private RegistrationSender registrationSender;
+
+    @Mock
+    private AccountService accountService;
+
+    @Mock
+    private UserService userService;
 
 
     @InjectMocks
@@ -277,6 +312,195 @@ class RegistrationServiceTest {
                     () -> registrationService.getRegistrationInfo(ID));
 
             verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldReturnRegistrationInfoWhenArgumentsAreValid() {
+            Registration registration = REGISTRATION
+                    .toBuilder()
+                    .registrationStatus(RegistrationStatus.PENDENTE)
+                    .registrationAddress(RegistrationAddress
+                            .builder()
+                            .cep(CEP)
+                            .rua(RUA)
+                            .bairro(BAIRRO)
+                            .complemento(COMPLEMENTO)
+                            .cidade(CIDADE)
+                            .estado(ESTADO)
+                            .build())
+                    .build();
+
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(registration));
+
+            RegistrationInformationDto registrationInformationDto = registrationService.getRegistrationInfo(ID);
+
+            verify(registrationRepository).findById(ID);
+
+            assertEquals(REGISTRATION_INFORMATION_DTO, registrationInformationDto);
+        }
+    }
+
+    @Nested
+    class AcceptRegistration {
+
+        @Test
+        public void shouldThrowWhenInvalidDocument() {
+            Registration registration = REGISTRATION
+                    .toBuilder()
+                    .registrationStatus(RegistrationStatus.PENDENTE)
+                    .registrationAddress(RegistrationAddress
+                            .builder()
+                            .cep(CEP)
+                            .rua(RUA)
+                            .bairro(BAIRRO)
+                            .complemento(COMPLEMENTO)
+                            .cidade(CIDADE)
+                            .estado(ESTADO)
+                            .build())
+                    .build();
+
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(registration));
+
+            when(documentValidationService.externalApiValidationDocument(registration)).thenReturn(false);
+
+            assertThrows(RegistrationDocumentValidationFailed.class,
+                    () -> registrationService.acceptRegistration(PROPOSAL_ACCEPTATION_DTO));
+
+            verify(registrationRepository).findById(ID);
+            verify(documentValidationService).externalApiValidationDocument(registration);
+        }
+
+        @Test
+        public void shouldSaveAndSendAcceptedMessageWhenArgumentsAreValid() throws JsonProcessingException {
+            Registration registration = REGISTRATION
+                    .toBuilder()
+                    .registrationStatus(RegistrationStatus.PENDENTE)
+                    .registrationAddress(RegistrationAddress
+                            .builder()
+                            .cep(CEP)
+                            .rua(RUA)
+                            .bairro(BAIRRO)
+                            .complemento(COMPLEMENTO)
+                            .cidade(CIDADE)
+                            .estado(ESTADO)
+                            .build())
+                    .build();
+
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(registration));
+
+            when(documentValidationService.externalApiValidationDocument(registration)).thenReturn(true);
+
+            when(registrationRepository.save(registration)).thenReturn(registration);
+            doNothing().when(registrationSender).sendAcceptedMessage(PROPOSAL_ACCEPTATION_DTO);
+
+            registrationService.acceptRegistration(PROPOSAL_ACCEPTATION_DTO);
+
+            verify(registrationRepository).save(registration);
+            verify(registrationSender).sendAcceptedMessage(PROPOSAL_ACCEPTATION_DTO);
+        }
+    }
+
+    @Nested
+    class CreateAccount {
+
+        @Test
+        public void shouldThrowEntityNotFoundWhenProposalIsInvalid() {
+            when(registrationRepository.findById(ID)).thenReturn(Optional.empty());
+
+            assertThrows(EntityNotFound.class,
+                    () -> registrationService.createAccount(PROPOSAL_ACCEPTATION_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldThrowRegistrationRequiredStepNotCompletedWhenRegistrationStepWasNotCompleted() {
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(buildRegistration(RegistrationStatus.INICIADO_INFORMACOES)));
+
+            assertThrows(RegistrationRequiredStepNotCompleted.class,
+                    () -> registrationService.createAccount(PROPOSAL_ACCEPTATION_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldThrowEntityStepAlreadyCompletedWhenRegistrationStepAlreadyCompleted() {
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(buildRegistration(RegistrationStatus.COMPLETO)));
+
+            assertThrows(EntityStepAlreadyCompleted.class,
+                    () -> registrationService.createAccount(PROPOSAL_ACCEPTATION_DTO));
+
+            verify(registrationRepository).findById(ID);
+        }
+
+        @Test
+        void shouldCreateAccountAndSendConfirmationEmail() {
+            when(registrationRepository.findById(ID))
+                    .thenReturn(Optional.of(buildRegistration(RegistrationStatus.ACEITO)));
+
+            when(accountService.createAccount()).thenReturn(Account.builder()
+                    .branchNumber("0001")
+                    .accountNumber("00000002")
+                    .user(null)
+                    .build());
+
+            when(userService.createUser(any())).thenReturn(User.builder()
+                    .firstName(FIRST_NAME)
+                    .cpf(CPF)
+                    .email(EMAIL)
+                    .build());
+
+            registrationService.createAccount(PROPOSAL_ACCEPTATION_DTO);
+
+            verify(registrationRepository).findById(ID);
+        }
+    }
+
+    @Nested
+    class RejectRegistration {
+
+        @Test
+        void shouldReturn() throws JsonProcessingException {
+            doNothing().when(registrationSender).sendRejectedMessage(PROPOSAL_ACCEPTATION_DTO);
+
+            registrationService.rejectedRegistration(PROPOSAL_ACCEPTATION_DTO);
+
+            verify(registrationSender).sendRejectedMessage(PROPOSAL_ACCEPTATION_DTO);
+        }
+    }
+
+    @Nested
+    class SendRejectedEmail {
+
+        @Test
+        public void ShouldSendEmailWhenArgumentsAreValid() {
+            Registration registration = REGISTRATION
+                    .toBuilder()
+                    .registrationStatus(RegistrationStatus.PENDENTE)
+                    .registrationAddress(RegistrationAddress
+                            .builder()
+                            .cep(CEP)
+                            .rua(RUA)
+                            .bairro(BAIRRO)
+                            .complemento(COMPLEMENTO)
+                            .cidade(CIDADE)
+                            .estado(ESTADO)
+                            .build())
+                    .build();
+
+
+            doNothing().when(emailService).sendProposalRetry(REGISTRATION_INFORMATION_DTO);
+            when(registrationRepository.findById(anyString()))
+                    .thenReturn(Optional.of(registration));
+
+            registrationService.sendRejectedEmail(PROPOSAL_ACCEPTATION_DTO);
+
+            verify(emailService).sendProposalRetry(REGISTRATION_INFORMATION_DTO);
         }
     }
 

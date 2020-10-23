@@ -45,7 +45,5 @@ public class UserTokenService {
         }
 
         userToken.setUserStatus(UserStatus.ATIVO);
-
-        //return userToken;
     }
 }
