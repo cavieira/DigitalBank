@@ -1,6 +1,6 @@
-# DigitalBank - API para o Desafio ZUP
+# DigitalBank - API 
 
-Esta é a API desenvolvida para o Desafio ZUP por Camila Faria Vieira. 
+Esta é a API de banco digital desenvolvida por Camila Faria Vieira. 
 
 Ela consiste num protótipo para operações básicas de um banco digital. As funcionalidades implementadas foram a criação de uma nova conta de pessoa física, o primeiro acesso pós aprovação de conta e o recebimento de dinheiro via transferência.
 
